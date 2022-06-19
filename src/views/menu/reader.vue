@@ -44,7 +44,7 @@
                 >
                   {{
                     item.node[0].element_content +
-                    (item.node[0].element_type != "end" ? ":" : "")
+                    (item.node[0].element_type != 'end' ? ':' : '')
                   }}</span
                 >
                 <div
@@ -67,7 +67,7 @@
                         );
                       }
                     "
-                    >{{ choice.remark }}
+                  >{{ choice.remark }}
                   </el-button>
                 </div>
               </el-card>
@@ -106,27 +106,27 @@
   </el-container>
 </template>
 <script>
-import axios from "axios";
-import "../../assets/css/jeditor.css";
-import "../../assets/css/chang.css";
-import "../../assets/css/base.css";
-import "@/assets/css/line.css";
+import axios from 'axios'
+import '../../assets/css/jeditor.css'
+import '../../assets/css/chang.css'
+import '../../assets/css/base.css'
+import '@/assets/css/line.css'
 import {
   pulldata,
   pullcontent,
   getStartNode,
   getElementContent,
-  getSceneContent,
-} from "@/api/reader.js";
-import { jsxClosingElement } from "@babel/types";
+  getSceneContent
+} from '@/api/reader.js'
+import { jsxClosingElement } from '@babel/types'
 
-const $ = require("jquery");
-const Loadding = require("../../assets/js/loadding").default.Loadding;
-const base = require("../../assets/js/base").default;
-const Storage = window.localStorage;
+const $ = require('jquery')
+const Loadding = require('../../assets/js/loadding').default.Loadding
+const base = require('../../assets/js/base').default
+const Storage = window.localStorage
 
 export default {
-  props: ["encode_drama_id", "encode_episode_id"],
+  props: ['encode_drama_id', 'encode_episode_id'],
   data() {
     return {
       author_id: null,
@@ -134,103 +134,103 @@ export default {
       browseTime: 0, // 浏览时长初始值为 0
       clearTimeSet: null,
       evaluation_score: [],
-      colors: ["#99A9BF", "#F7BA2A", "#FF9900"],
+      colors: ['#99A9BF', '#F7BA2A', '#FF9900'],
       isCollapse: false,
       isCondition: false,
-      searchcontent: "",
+      searchcontent: '',
       drama_id: 0,
       episode_id: 0,
       chang_list: [],
       chang_id2idx: {},
       current_button: [],
-      start_id: "",
+      start_id: '',
       before: {
         graph_nodes_list: [],
         graph_edges_list: [],
         graph_nodes_set: new Set(),
         graph_edges_set: new Set(),
         node_id2edge: {},
-        edge_id2node: {},
+        edge_id2node: {}
       },
       chang_content_list: [],
-      next_scene: null,
-    };
+      next_scene: null
+    }
   },
-  mounted: function () {
-    base.reset_rightboard_width();
-    var that = this;
-    this.drama_id = window.atob(this.encode_drama_id);
-    this.episode_id = window.atob(this.encode_episode_id);
-    var first_loadding = new Loadding();
-    first_loadding.add_title("初始化");
-    first_loadding.__init__();
-    first_loadding.add_process("拉取数据", function () {
+  mounted: function() {
+    base.reset_rightboard_width()
+    var that = this
+    this.drama_id = window.atob(this.encode_drama_id)
+    this.episode_id = window.atob(this.encode_episode_id)
+    var first_loadding = new Loadding()
+    first_loadding.add_title('初始化')
+    first_loadding.__init__()
+    first_loadding.add_process('拉取数据', function() {
       pulldata(that.drama_id, that.episode_id)
         .then((returndata) => {
           for (var i in returndata[0]) {
-            that.chang_list.push(returndata[0][i]);
-            that.chang_id2idx[returndata[0][i].id] = i;
+            that.chang_list.push(returndata[0][i])
+            that.chang_id2idx[returndata[0][i].id] = i
           }
         })
-        .catch((error) => console.log(error));
-    });
-    first_loadding.add_process("拉取第一个场", () => {
+        .catch((error) => console.log(error))
+    })
+    first_loadding.add_process('拉取第一个场', () => {
       getStartNode(this.drama_id, this.episode_id).then((res) => {
-        this.show_content(res.next_list[0]);
-      });
-    });
-    first_loadding.start();
+        this.show_content(res.next_list[0])
+      })
+    })
+    first_loadding.start()
   },
   beforeDestroy() {
-    clearInterval(this.clearTimeSet); // 离开页面后清除定时器
+    clearInterval(this.clearTimeSet) // 离开页面后清除定时器
   },
   methods: {
     changeRage() {
-      console.log(this.evaluation_score);
+      console.log(this.evaluation_score)
     },
     setTime(params) {
       //设置定时器
       this.clearTimeSet = setInterval(() => {
-        this.browseTime++;
+        this.browseTime++
         // console.log(this.browseTime, "时长累计");
-      }, 1000);
-      console.log(this.browseTime, "时长累计",params);
+      }, 1000)
+      console.log(this.browseTime, '时长累计', params)
     },
     show_content(data) {
       getElementContent(this.drama_id, this.episode_id, data.children_id).then(
         (res) => {
           if (res.scene) {
-            console.log("res", res);
-            this.author_id = res.scene[0].author_id;
-            var time = new Date();
+            console.log('res', res)
+            this.author_id = res.scene[0].author_id
+            var time = new Date()
             var recent_chang = [
               res.node[0].drama_id,
               res.node[0].episode_id,
-              res.node[0].scene_id,
-            ];
-            var li_chang = [];
-            Storage.setItem(time.getTime(), JSON.stringify(recent_chang));
-            li_chang = this.checkStorage();
+              res.node[0].scene_id
+            ]
+            var li_chang = []
+            Storage.setItem(time.getTime(), JSON.stringify(recent_chang))
+            li_chang = this.checkStorage()
             //
             // console.log(li_chang)
-            Storage.clear();
+            Storage.clear()
             for (var i = 0; i < li_chang.length; i++) {
-              Storage.setItem(li_chang[i].time, li_chang[i].data);
+              Storage.setItem(li_chang[i].time, li_chang[i].data)
             }
-            Storage.setItem("loglevel:webpack-dev-server", "SILENT");
-            this.next_scene = res.next_list[0];
+            Storage.setItem('loglevel:webpack-dev-server', 'SILENT')
+            this.next_scene = res.next_list[0]
 
             pullcontent(this.drama_id, this.episode_id, res.scene[0].id).then(
               (returndata) => {
-                console.log("这是return");
-                console.log(returndata);
+                console.log('这是return')
+                console.log(returndata)
                 if (returndata != null) {
                 }
                 // console.log("这是浏览时长：", this.browseTime);
-                clearInterval(this.clearTimeSet);
+                clearInterval(this.clearTimeSet)
                 // console.log("res.scene[0].id", res.scene[0].id);
-                this.now_sceneid.push(res.scene[0].id);
-                this.setTime(this.now_sceneid);
+                this.now_sceneid.push(res.scene[0].id)
+                this.setTime(this.now_sceneid)
 
                 //提交时长
                 if (this.browseTime != 0) {
@@ -246,110 +246,112 @@ export default {
                     res.scene[0].episode_id,
                     this.now_sceneid[this.now_sceneid.length - 2],
                     this.browseTime
-                  );
+                  )
                 }
-                this.browseTime = 0;
+                this.browseTime = 0
+                for (const i in returndata[0]) {
+                  // replace all contenteditable with kriswu
+                  if (returndata[0][i].content.indexOf('contenteditable') !== -1) {
+                    returndata[0][i].content = returndata[0][i].content.replace(/contenteditable/g, 'kriswu')
+                  }
+                }
                 this.chang_content_list.push({
                   ...res,
                   content: returndata[0],
-                  type: true,
-                });
+                  type: true
+                })
               }
-            );
+            )
           } else {
-            this.next_scene = null;
-            this.chang_content_list.push({ ...res, type: false });
+            this.next_scene = null
+            this.chang_content_list.push({ ...res, type: false })
           }
         }
-      );
-      console.log("111", this.author_id);
+      )
     },
     show_scene(item) {
       getSceneContent(this.drama_id, this.episode_id, item.id).then((res) => {
         pullcontent(this.drama_id, this.episode_id, res.scene[0].id).then(
           (returndata) => {
             this.chang_content_list = [
-              { ...res, content: returndata[0], type: true },
-            ];
+              { ...res, content: returndata[0], type: true }
+            ]
           }
-        );
-      });
+        )
+      })
     },
-    encode: function (code) {
-      return window.btoa(code);
+    encode: function(code) {
+      return window.btoa(code)
     },
-    load: function () {
+    load: function() {
       if (this.next_scene) {
-        console.log("this.next_scene123132", this.next_scene);
-        this.show_content(this.next_scene);
+        this.show_content(this.next_scene)
       }
     },
-    checkStorage: function () {
+    checkStorage: function() {
       // 对storage进行检查。
       // 返回一个对象数组，里面根据time由大到小，并排除重复的data
-      var limit_chang = [];
-      var chang = {};
+      var limit_chang = []
+      var chang = {}
       for (var i = 0; i < Storage.length; i++) {
-        chang = {};
-        if (Storage.key(i) != "loglevel:webpack-dev-server") {
-          chang.time = eval(Storage.key(i));
-          chang.data = Storage.getItem(Storage.key(i));
-          limit_chang.push(chang);
+        chang = {}
+        if (Storage.key(i) != 'loglevel:webpack-dev-server') {
+          chang.time = eval(Storage.key(i))
+          chang.data = Storage.getItem(Storage.key(i))
+          limit_chang.push(chang)
         }
       }
-      limit_chang.sort(this.sortBy("time", true, parseInt));
+      limit_chang.sort(this.sortBy('time', true, parseInt))
       // limit_chang = this.unique(limit_chang,'data');
       limit_chang = limit_chang.reduce((acc, cur) => {
-        const ids = acc.map((item) => item.data);
-        return ids.includes(cur.data) ? acc : [...acc, cur];
-      }, []);
-      console.log(limit_chang);
-      return limit_chang;
+        const ids = acc.map((item) => item.data)
+        return ids.includes(cur.data) ? acc : [...acc, cur]
+      }, [])
+      return limit_chang
     },
-    sortBy: function (filed, rev, primer) {
+    sortBy: function(filed, rev, primer) {
       // 排序
-      rev = rev ? -1 : 1;
-      return function (a, b) {
-        a = a[filed];
-        b = b[filed];
-        if (typeof primer != "undefined") {
-          a = primer(a);
-          b = primer(b);
+      rev = rev ? -1 : 1
+      return function(a, b) {
+        a = a[filed]
+        b = b[filed]
+        if (typeof primer != 'undefined') {
+          a = primer(a)
+          b = primer(b)
         }
         if (a < b) {
-          return rev * -1;
+          return rev * -1
         }
         if (a > b) {
-          return rev * 1;
+          return rev * 1
         }
-        return 1;
-      };
+        return 1
+      }
     },
     //上传阅读时间函数
     post_readertime(author_id, drama_id, episode_id, scene_id, time) {
       // 发送 POST 请求
       axios({
-        method: "post",
+        method: 'post',
         url:
-          "//39.104.83.137:8081/reader/feedback/" +
+          '//39.104.83.137:8081/reader/feedback/' +
           author_id +
-          "/" +
+          '/' +
           drama_id +
-          "/" +
+          '/' +
           episode_id +
-          "/" +
+          '/' +
           scene_id,
-        data: { read_seconds: time },
+        data: { read_seconds: time }
       })
         .then((res) => {
-          console.log("成功上传时间！", res,'上传ID',scene_id);
         })
         .catch((err) => {
-          console.log(err);
-        });
-    },
-  },
-};
+          console.log(err)
+        })
+    }
+  }
+}
 </script>
 <style scoped>
 html,
@@ -427,6 +429,7 @@ span {
 /deep/ .el-drawer__container ::-webkit-scrollbar {
   display: none;
 }
+
 .evaluate {
   height: 30px;
   width: 150px;
