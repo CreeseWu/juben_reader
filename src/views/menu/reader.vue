@@ -124,6 +124,7 @@ export default {
     show_content(data) {
       getElementContent(this.drama_id, this.episode_id, data.children_id).then(res => {
         if (res.scene) {
+          console.log('res',res)
           var time = new Date()
           var recent_chang = [res.node[0].drama_id, res.node[0].episode_id, res.node[0].scene_id]
           var li_chang = []
@@ -160,6 +161,7 @@ export default {
       return window.btoa(code)
     },
     load: function() {
+      console.log("this.next_scene", this.next_scene)
       if (this.next_scene) {
         this.show_content(this.next_scene)
       }
