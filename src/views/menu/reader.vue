@@ -1,12 +1,12 @@
 <template>
   <el-container class="home-container">
-      <div class="backto iconfont" @click="$router.push('/menu/e/'+encode(drama_id)+'/')">&#xe6a8;</div>
-      <div
-        style="display: flex;
+    <div class="backto iconfont" @click="$router.push('/menu/e/'+encode(drama_id)+'/')">&#xe6a8;</div>
+    <div
+      style="display: flex;
         align-items: center"
-      >  
-      </div>
-    
+    >
+    </div>
+
     <el-container>
       <el-main>
         <el-row type="flex" justify="center">
@@ -20,9 +20,13 @@
                 <div v-for="dialog in item.content" v-if="item.type">
                   <p v-html="dialog.content"></p>
                 </div>
-                <span v-if="!item.type" style="white-space: nowrap;line-height: 40px;"> {{ item.node[0].element_content + (item.node[0].element_type!='end'?':':'')}}</span>
+                <span v-if="!item.type" style="white-space: nowrap;line-height: 40px;"
+                > {{ item.node[0].element_content + (item.node[0].element_type != 'end' ? ':' : '') }}</span>
                 <div v-if="!item.type" style="width:100%;display: flex;justify-content: space-around;">
-                  <el-button v-for="choice in item.next_list" type="primary" @click="() => {next_scene = choice;chang_content_list.splice(chang_content_list.length-1,1)}">{{ choice.remark }}</el-button>
+                  <el-button v-for="choice in item.next_list" type="primary"
+                             @click="() => {next_scene = choice;chang_content_list.splice(chang_content_list.length-1,1)}"
+                  >{{ choice.remark }}
+                  </el-button>
                 </div>
               </el-card>
             </ul>
@@ -56,11 +60,11 @@ import '../../assets/css/chang.css'
 import '../../assets/css/base.css'
 import '@/assets/css/line.css'
 import { pulldata, pullcontent, getStartNode, getElementContent, getSceneContent } from '@/api/reader.js'
+
 const $ = require('jquery')
 const Loadding = require('../../assets/js/loadding').default.Loadding
 const base = require('../../assets/js/base').default
 const Storage = window.localStorage
-
 
 export default {
   props: ['encode_drama_id', 'encode_episode_id'],
@@ -120,22 +124,22 @@ export default {
     show_content(data) {
       getElementContent(this.drama_id, this.episode_id, data.children_id).then(res => {
         if (res.scene) {
-          var time = new Date();
-          var recent_chang=[res.node[0].drama_id,res.node[0].episode_id,res.node[0].scene_id];
-          var li_chang = [];
-          Storage.setItem(time.getTime(),JSON.stringify(recent_chang)); 
-          li_chang = this.checkStorage();
-          // 
+          var time = new Date()
+          var recent_chang = [res.node[0].drama_id, res.node[0].episode_id, res.node[0].scene_id]
+          var li_chang = []
+          Storage.setItem(time.getTime(), JSON.stringify(recent_chang))
+          li_chang = this.checkStorage()
+          //
           // console.log(li_chang)
-          Storage.clear();                            
-          for(var i=0;i<li_chang.length;i++){
-            Storage.setItem(li_chang[i].time,li_chang[i].data)            
+          Storage.clear()
+          for (var i = 0; i < li_chang.length; i++) {
+            Storage.setItem(li_chang[i].time, li_chang[i].data)
           }
-          Storage.setItem('loglevel:webpack-dev-server','SILENT');
+          Storage.setItem('loglevel:webpack-dev-server', 'SILENT')
           this.next_scene = res.next_list[0]
           pullcontent(this.drama_id, this.episode_id, res.scene[0].id).then((returndata) => {
-            console.log("这是return");
-            console.log(returndata);
+            console.log('这是return')
+            console.log(returndata)
             this.chang_content_list.push({ ...res, 'content': returndata[0], 'type': true })
           })
         } else {
@@ -147,7 +151,7 @@ export default {
     show_scene(item) {
       getSceneContent(this.drama_id, this.episode_id, item.id).then((res) => {
         pullcontent(this.drama_id, this.episode_id, res.scene[0].id).then((returndata) => {
-          
+
           this.chang_content_list = [{ ...res, 'content': returndata[0], 'type': true }]
         })
       })
@@ -163,66 +167,74 @@ export default {
     checkStorage: function() {
       // 对storage进行检查。
       // 返回一个对象数组，里面根据time由大到小，并排除重复的data
-      var limit_chang =[];
-      var chang = {};
-      for(var i=0;i<Storage.length;i++){
-        chang = {} ;
-        if(Storage.key(i) != 'loglevel:webpack-dev-server'){
-          chang.time = eval(Storage.key(i));
+      var limit_chang = []
+      var chang = {}
+      for (var i = 0; i < Storage.length; i++) {
+        chang = {}
+        if (Storage.key(i) != 'loglevel:webpack-dev-server') {
+          chang.time = eval(Storage.key(i))
           chang.data = Storage.getItem(Storage.key(i))
-          limit_chang.push(chang);
-        }       
+          limit_chang.push(chang)
+        }
       }
-      limit_chang.sort(this.sortBy('time',true,parseInt));
+      limit_chang.sort(this.sortBy('time', true, parseInt))
       // limit_chang = this.unique(limit_chang,'data');
       limit_chang = limit_chang.reduce((acc, cur) => {
-          const ids = acc.map(item => item.data);
-          return ids.includes(cur.data) ? acc : [...acc, cur];
-      }, []);
+        const ids = acc.map(item => item.data)
+        return ids.includes(cur.data) ? acc : [...acc, cur]
+      }, [])
       console.log(limit_chang)
-      return limit_chang;
+      return limit_chang
     },
-    sortBy: function(filed,rev,primer){
+    sortBy: function(filed, rev, primer) {
       // 排序
-      rev = (rev)?-1:1;
-      return function(a,b){
-          a = a[filed];
-          b = b[filed];
-          if (typeof (primer) != 'undefined'){
-              a = primer(a);
-              b = primer(b);
-          }
-          if (a < b){
-              return rev * -1;
-          }
-          if(a>b){
-              return rev * 1;
-          }
-          return 1;
+      rev = (rev) ? -1 : 1
+      return function(a, b) {
+        a = a[filed]
+        b = b[filed]
+        if (typeof (primer) != 'undefined') {
+          a = primer(a)
+          b = primer(b)
+        }
+        if (a < b) {
+          return rev * -1
+        }
+        if (a > b) {
+          return rev * 1
+        }
+        return 1
       }
-    },
+    }
   }
 }
 </script>
 <style scoped>
-html,body{width:100%;height:100%;}
-span{
-  text-align:center;
-  display:inline-block
+html, body {
+  width: 100%;
+  height: 100%;
 }
-.home-container{
+
+span {
+  text-align: center;
+  display: inline-block
+}
+
+.home-container {
   height: calc(100vh - 50px);
-  background:#eee;
+  background: #eee;
 }
-.el-main{
+
+.el-main {
   overflow-y: scroll;
 }
-.el-main::-webkit-scrollbar{
+
+.el-main::-webkit-scrollbar {
   width: 0;
   height: 0;
 }
-.toggle-button{
-  background-color:  #87879c;
+
+.toggle-button {
+  background-color: #87879c;
   font-size: 10px;
   line-height: 20px;
   color: #fff;
@@ -230,34 +242,45 @@ span{
   letter-spacing: 0.2em;
   cursor: pointer;
 }
-.fix_button{
+
+.fix_button {
   width: 45px;
   position: fixed;
   top: calc(50vh - 10px);
 }
-.el-card{
+
+.el-card {
   margin: 10px 0 0 0;
 }
-.el-card.other{
+
+.el-card.other {
   box-shadow: none;
   -webkit-box-shadow: none;
-  border:0px;
+  border: 0px;
   background: transparent;
 }
-.el-card.scene ::v-deep .el-card__header{
-  font-size:1.2em;
+
+.el-card.scene ::v-deep .el-card__header {
+  font-size: 1.2em;
   font-weight: bold;
 }
-.el-card.other ::v-deep .el-card__body{
+
+.el-card.other ::v-deep .el-card__body {
   display: flex;
   justify-content: left;
 }
-.backto{
-  box-shadow: 0px 4px 10px -2px rgb(93,107,192);
-      position: absolute;
-    z-index: 1;
+
+.backto {
+  box-shadow: 0px 4px 10px -2px rgb(93, 107, 192);
+  position: absolute;
+  z-index: 1;
 }
-.el-drawer{
-  overflow-y: scroll;
+
+/deep/ .el-drawer__body {
+  overflow: auto;
+}
+
+/deep/ .el-drawer__container ::-webkit-scrollbar {
+  display: none;
 }
 </style>
