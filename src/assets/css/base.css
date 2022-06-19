@@ -166,8 +166,8 @@ float:left;
 }
 
 .item_board{
-    height: auto;
-    max-height: calc(100% - 150px);
+    height: 750px;
+    /* max-height: calc(100% - 150px); */
     padding: 20px 10px;
     width: calc(100% - 10px);
     margin: 10px 5px;

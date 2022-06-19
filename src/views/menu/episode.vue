@@ -152,4 +152,7 @@ export default {
     right:-20px;
   }
 }
+.item_board{
+  overflow: auto;
+}
 </style>
