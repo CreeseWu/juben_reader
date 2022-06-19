@@ -29,12 +29,12 @@ export default {
     },
     mounted: function(){
       getSceneContent(this.drama_id, this.episode_id, this.scene_id).then((res) => {
-          // console.log('这是res');
-          // console.log(res);
+          console.log('这是res');
+          console.log(res);
         pullcontent(this.drama_id, this.episode_id, res.scene[0].id).then((returndata) => {
           console.log('这是returndata');
           console.log(returndata);
-          this.chang_content_list = [{ ...res, 'content': returndata[0], 'type': true }]; 
+          this.chang_content_list = [{ ...res, 'content': returndata[0], 'type': true }];
         })
       })
       console.log('这是内容列表');
