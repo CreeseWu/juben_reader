@@ -19,15 +19,25 @@
             >
               <!-- <el-card v-for="item in chang_content_list" :style="{ borderTop: item.type?'2px solid rgb(159 162 169)':0, borderBottom:item.type?0:'2px solid rgb(159 162 169)' }"> -->
               <el-card
-                v-for="item in chang_content_list"
+                v-for="(item, index) in chang_content_list"
+                :key="index"
                 :class="item.type ? 'scene' : 'other'"
               >
                 <div slot="header" class="clearfix" v-if="item.type">
                   <span> {{ item.scene[0].scene_name }} </span>
                 </div>
+                <div class="evaluate" v-if="item.type">
+                  <el-rate
+                    v-model="evaluation_score[index]"
+                    :colors="colors"
+                    @change="changeRage()"
+                  >
+                  </el-rate>
+                </div>
                 <div v-for="dialog in item.content" v-if="item.type">
                   <p v-html="dialog.content"></p>
                 </div>
+
                 <span
                   v-if="!item.type"
                   style="white-space: nowrap; line-height: 40px"
@@ -96,6 +106,7 @@
   </el-container>
 </template>
 <script>
+import axios from "axios";
 import "../../assets/css/jeditor.css";
 import "../../assets/css/chang.css";
 import "../../assets/css/base.css";
@@ -107,6 +118,7 @@ import {
   getElementContent,
   getSceneContent,
 } from "@/api/reader.js";
+import { jsxClosingElement } from "@babel/types";
 
 const $ = require("jquery");
 const Loadding = require("../../assets/js/loadding").default.Loadding;
@@ -117,6 +129,12 @@ export default {
   props: ["encode_drama_id", "encode_episode_id"],
   data() {
     return {
+      author_id: null,
+      now_sceneid: [],
+      browseTime: 0, // 浏览时长初始值为 0
+      clearTimeSet: null,
+      evaluation_score: [],
+      colors: ["#99A9BF", "#F7BA2A", "#FF9900"],
       isCollapse: false,
       isCondition: false,
       searchcontent: "",
@@ -163,12 +181,27 @@ export default {
     });
     first_loadding.start();
   },
+  beforeDestroy() {
+    clearInterval(this.clearTimeSet); // 离开页面后清除定时器
+  },
   methods: {
+    changeRage() {
+      console.log(this.evaluation_score);
+    },
+    setTime(params) {
+      //设置定时器
+      this.clearTimeSet = setInterval(() => {
+        this.browseTime++;
+        // console.log(this.browseTime, "时长累计");
+      }, 1000);
+      console.log(this.browseTime, "时长累计",params);
+    },
     show_content(data) {
       getElementContent(this.drama_id, this.episode_id, data.children_id).then(
         (res) => {
           if (res.scene) {
             console.log("res", res);
+            this.author_id = res.scene[0].author_id;
             var time = new Date();
             var recent_chang = [
               res.node[0].drama_id,
@@ -186,10 +219,36 @@ export default {
             }
             Storage.setItem("loglevel:webpack-dev-server", "SILENT");
             this.next_scene = res.next_list[0];
+
             pullcontent(this.drama_id, this.episode_id, res.scene[0].id).then(
               (returndata) => {
                 console.log("这是return");
                 console.log(returndata);
+                if (returndata != null) {
+                }
+                // console.log("这是浏览时长：", this.browseTime);
+                clearInterval(this.clearTimeSet);
+                // console.log("res.scene[0].id", res.scene[0].id);
+                this.now_sceneid.push(res.scene[0].id);
+                this.setTime(this.now_sceneid);
+
+                //提交时长
+                if (this.browseTime != 0) {
+                  // console.log(
+                  //   this.browseTime,
+                  //   "时长累计",
+                  //   "scend_id",
+                  //   res.scene[0].id
+                  // );
+                  this.post_readertime(
+                    this.author_id,
+                    res.scene[0].drama_id,
+                    res.scene[0].episode_id,
+                    this.now_sceneid[this.now_sceneid.length - 2],
+                    this.browseTime
+                  );
+                }
+                this.browseTime = 0;
                 this.chang_content_list.push({
                   ...res,
                   content: returndata[0],
@@ -203,7 +262,7 @@ export default {
           }
         }
       );
-      console.log("111", this.chang_content_list);
+      console.log("111", this.author_id);
     },
     show_scene(item) {
       getSceneContent(this.drama_id, this.episode_id, item.id).then((res) => {
@@ -220,8 +279,8 @@ export default {
       return window.btoa(code);
     },
     load: function () {
-      console.log("this.next_scene", this.next_scene);
       if (this.next_scene) {
+        console.log("this.next_scene123132", this.next_scene);
         this.show_content(this.next_scene);
       }
     },
@@ -265,6 +324,29 @@ export default {
         }
         return 1;
       };
+    },
+    //上传阅读时间函数
+    post_readertime(author_id, drama_id, episode_id, scene_id, time) {
+      // 发送 POST 请求
+      axios({
+        method: "post",
+        url:
+          "//39.104.83.137:8081/reader/feedback/" +
+          author_id +
+          "/" +
+          drama_id +
+          "/" +
+          episode_id +
+          "/" +
+          scene_id,
+        data: { read_seconds: time },
+      })
+        .then((res) => {
+          console.log("成功上传时间！", res,'上传ID',scene_id);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     },
   },
 };
@@ -344,5 +426,11 @@ span {
 
 /deep/ .el-drawer__container ::-webkit-scrollbar {
   display: none;
+}
+.evaluate {
+  height: 30px;
+  width: 150px;
+  float: right;
+  /* background-color: #87879c; */
 }
 </style>
